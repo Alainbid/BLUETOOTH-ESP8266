@@ -4,6 +4,7 @@
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include <ESP8266WiFi.h>
+#include "secrets.h" // Include your secrets.h file for WiFi credentials
 
 #define EEPROM_SIZE 512 // Define the size of EEPROM (ESP8266 has up to 512 bytes of EEPROM)
 #define STRING_ADDR 0   // Start address in EEPROM
@@ -196,6 +197,7 @@ void parseCommand(String command) {
     // bloc de commande du relay suivant
     blocIndex = command.indexOf('&', startIndex);
   }
+
 for(int i =0; i < relayCommandCount; i++){
   sortRelayCommandsByStart(relayCommands, relayCommandCount);
     Serial.println(  tableNomZones[relayCommands[i].relayNbr - 1] + "\t" +
@@ -205,47 +207,6 @@ for(int i =0; i < relayCommandCount; i++){
              ", done = " + String(relayCommands[i].done));
   }
   // trier les commandes par heure de début
-}
-
-void setup() {
-  // Initialize EEPROM
-  EEPROM.begin(EEPROM_SIZE);
-  attente= millis();
-  
-  Serial.begin(115200);
-  bluetooth.begin(9600);
-  Serial.println("...");
-  Serial.println("Bluetooth disponible à 9600 bds");
-
-if (test){
-      WiFi.begin(ssid, password);
-      int wifiTimeout = 0;
-      while (WiFi.status() != WL_CONNECTED && wifiTimeout < 20) {
-        delay(500);
-        Serial.print("...");
-        wifiTimeout++;
-      }
-      Serial.print("Adresse MAC de l'ESP8266: ");
-      Serial.println(WiFi.macAddress());
-      Serial.print("Adresse IP de l'ESP8266: ");
-      Serial.println(WiFi.localIP());
-  }
-String heureLue = getTimeString();
-Serial.println("\n\n" + heureLue); // Affiche par exemple : 14:05.09
-
-  // Initialisez les pins des relais
-  for (int i = 0; i < numRelays; i++) {
-    pinMode(relayPins[i], OUTPUT);
-    digitalWrite(relayPins[i], HIGH); // Relays are off initially
-  }
-    
-  if(test)  storeDataWithChecksum(data);
-  // Read the stored data from EEPROM (assuming dataSize is 300)
-  command = retrieveDataWithVerification();
-  if(test) Serial.println("\n début commande stockée dans EEPROM :" + command);
-
-  // Parse the command once
-  parseCommand(command);
 }
 
 
@@ -282,6 +243,48 @@ void handleRelayCommand(RelayCommand &relayCmd) {
     Serial.println("Invalid relay number: " + String(relayNumber + 1));
   }
 }
+
+void setup() {
+  // Initialize EEPROM
+  EEPROM.begin(EEPROM_SIZE);
+  attente= millis();
+  
+  Serial.begin(115200);
+  bluetooth.begin(9600);
+  Serial.println("...");
+  Serial.println("Bluetooth disponible à 9600 bds");
+
+if (test){
+      WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+      int wifiTimeout = 0;
+      while (WiFi.status() != WL_CONNECTED && wifiTimeout < 20) {
+        delay(500);
+        Serial.print("...");
+        wifiTimeout++;
+      }
+      Serial.print("Adresse MAC de l'ESP8266: ");
+      Serial.println(WiFi.macAddress());
+      Serial.print("Adresse IP de l'ESP8266: ");
+      Serial.println(WiFi.localIP());
+  }
+String heureLue = getTimeString();
+Serial.println("\n\n" + heureLue); // Affiche par exemple : 14:05.09
+
+  // Initialisez les pins des relais
+  for (int i = 0; i < numRelays; i++) {
+    pinMode(relayPins[i], OUTPUT);
+    digitalWrite(relayPins[i], HIGH); // Relays are off initially
+  }
+    
+  if(test)  storeDataWithChecksum(data);
+  // Read the stored data from EEPROM (assuming dataSize is 300)
+  command = retrieveDataWithVerification();
+  if(test) Serial.println("\n début commande stockée dans EEPROM :" + command);
+
+  // Parse the command once
+  parseCommand(command);
+}
+
 
 void loop() {
 
